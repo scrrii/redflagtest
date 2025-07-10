@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>اختبره قبل المواعدة - لعبة الحب السرية</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div id="home-screen" class="screen active">
+            <h1 class="title">اختبره قبل المواعدة</h1>
+            <h2 class="subtitle">لعبة الحب السرية</h2>
+            <div class="description">
+                <p>أنشئي اختبارًا سريعًا لمعرفة مدى توافقك مع شخص تهتمين به!</p>
+            </div>
+            <div class="buttons">
+                <button id="random-mode-btn" class="btn primary-btn">
+                    <i class="fas fa-random"></i> وضع عشوائي
+                </button>
+                <button id="custom-mode-btn" class="btn secondary-btn">
+                    <i class="fas fa-edit"></i> وضع مخصص
+                </button>
+            </div>
+            <div class="language-selector">
+                <button id="ar-lang" class="lang-btn active">العربية</button>
+                <button id="en-lang" class="lang-btn">English</button>
+            </div>
+        </div>
+
+        <div id="random-mode-screen" class="screen">
+            <h2>وضع عشوائي</h2>
+            <p>سنختار لك أسئلة ممتعة ومثيرة للاهتمام!</p>
+            <div class="name-inputs">
+                <div class="input-group">
+                    <label for="random-creator-name">اسمك:</label>
+                    <input type="text" id="random-creator-name" placeholder="أدخلي اسمك هنا...">
+                </div>
+                <div class="input-group">
+                    <label for="random-recipient-name">اسم الشخص الآخر:</label>
+                    <input type="text" id="random-recipient-name" placeholder="أدخلي اسم الشخص الذي تختبرينه...">
+                </div>
+            </div>
+            <div id="random-questions-container" class="questions-container">
+                <!-- Questions will be loaded here -->
+            </div>
+            <div class="buttons">
+                <button id="random-generate-link" class="btn primary-btn">إنشاء رابط</button>
+                <button id="back-from-random" class="btn secondary-btn">رجوع</button>
+            </div>
+        </div>
+
+        <div id="custom-mode-screen" class="screen">
+            <h2>وضع مخصص</h2>
+            <p>أضيفي أسئلتك الخاصة واختاري الإجابات المثالية!</p>
+            <div class="name-inputs">
+                <div class="input-group">
+                    <label for="custom-creator-name">اسمك:</label>
+                    <input type="text" id="custom-creator-name" placeholder="أدخلي اسمك هنا...">
+                </div>
+                <div class="input-group">
+                    <label for="custom-recipient-name">اسم الشخص الآخر:</label>
+                    <input type="text" id="custom-recipient-name" placeholder="أدخلي اسم الشخص الذي تختبرينه...">
+                </div>
+            </div>
+            <div id="custom-questions-container" class="questions-container">
+                <div class="question-item">
+                    <input type="text" class="question-input" placeholder="اكتبي سؤالك هنا...">
+                    <div class="answer-options">
+                        <label>
+                            <input type="radio" name="answer-1" value="yes" checked>
+                            <span>نعم</span>
+                        </label>
+                        <label>
+                            <input type="radio" name="answer-1" value="no">
+                            <span>لا</span>
+                        </label>
+                    </div>
+                    <button class="remove-question-btn"><i class="fas fa-trash"></i></button>
+                </div>
+            </div>
+            <button id="add-question-btn" class="btn secondary-btn">
+                <i class="fas fa-plus"></i> إضافة سؤال
+            </button>
+            <div class="buttons">
+                <button id="custom-generate-link" class="btn primary-btn">إنشاء رابط</button>
+                <button id="back-from-custom" class="btn secondary-btn">رجوع</button>
+            </div>
+        </div>
+
+        <div id="share-screen" class="screen">
+            <h2>شاركي الاختبار!</h2>
+            <p>أرسلي هذا الرابط للشخص الذي تريدين اختباره:</p>
+            <div class="share-link-container">
+                <input type="text" id="share-link" readonly>
+                <button id="copy-link-btn" class="btn secondary-btn">
+                    <i class="fas fa-copy"></i>
+                </button>
+            </div>
+            <div class="share-options">
+                <a href="#" id="share-whatsapp" class="share-btn whatsapp">
+                    <i class="fab fa-whatsapp"></i>
+                </a>
+                <a href="#" id="share-facebook" class="share-btn facebook">
+                    <i class="fab fa-facebook"></i>
+                </a>
+                <a href="#" id="share-twitter" class="share-btn twitter">
+                    <i class="fab fa-twitter"></i>
+                </a>
+            </div>
+            <p class="note">سنحفظ هذا الرابط لك. تأكدي من حفظه أيضًا للوصول إلى النتائج لاحقًا!</p>
+            <div class="buttons">
+                <button id="view-results-btn" class="btn primary-btn">عرض النتائج</button>
+                <button id="back-from-share" class="btn secondary-btn">رجوع</button>
+            </div>
+        </div>
+
+        <div id="quiz-screen" class="screen">
+            <h2>اختبار الحب</h2>
+            <p id="quiz-intro-text">أجب على الأسئلة التالية بصدق:</p>
+            <div id="quiz-questions-container" class="questions-container">
+                <!-- Questions will be loaded here -->
+            </div>
+            <div class="buttons">
+                <button id="submit-answers" class="btn primary-btn">إرسال الإجابات</button>
+            </div>
+        </div>
+
+        <div id="results-screen" class="screen">
+            <h2>النتائج!</h2>
+            <h3 id="names-comparison" class="names-comparison"></h3>
+            <div class="results-container">
+                <div class="compatibility-score">
+                    <div class="score-circle">
+                        <span id="compatibility-percentage">0%</span>
+                    </div>
+                    <p>نسبة التوافق</p>
+                </div>
+                <div class="results-details">
+                    <div class="result-item">
+                        <i class="fas fa-check-circle"></i>
+                        <span id="matching-answers">0</span> إجابات متطابقة
+                    </div>
+                    <div class="result-item">
+                        <i class="fas fa-times-circle"></i>
+                        <span id="red-flags">0</span> علامات تحذيرية
+                    </div>
+                </div>
+                <div id="result-analysis" class="result-analysis">
+                    <!-- Analysis will be shown here -->
+                </div>
+            </div>
+            <div class="buttons">
+                <button id="create-new-test" class="btn primary-btn">إنشاء اختبار جديد</button>
+                <button id="share-results" class="btn secondary-btn">مشاركة النتائج</button>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>© 2023 اختبره قبل المواعدة - جميع الحقوق محفوظة</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
