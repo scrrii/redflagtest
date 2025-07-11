@@ -150,14 +150,59 @@ function init() {
     // Set up event listeners
     setupEventListeners();
     
-    // Check if there's a test ID in the URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const testId = urlParams.get('test');
-    const viewResults = urlParams.get('results');
+    // Handle URL routing
+    handleUrlRouting();
+    
+    // Add popstate event listener to handle browser back/forward navigation
+    window.addEventListener('popstate', handleUrlRouting);
+}
+
+// Handle URL routing based on current location
+function handleUrlRouting() {
+    // First try to get parameters from hash (for better mobile compatibility)
+    let testId = null;
+    let viewResults = null;
+    
+    // Check hash first (format: #test=abc123&results=true)
+    if (window.location.hash) {
+        const hashParams = new URLSearchParams(window.location.hash.substring(1));
+        testId = hashParams.get('test');
+        viewResults = hashParams.get('results');
+    }
+    
+    // If not found in hash, check query parameters
+    if (!testId) {
+        const urlParams = new URLSearchParams(window.location.search);
+        testId = urlParams.get('test');
+        viewResults = urlParams.get('results');
+    }
     
     if (testId) {
         // If there's a test ID, load the test
-        loadTest(testId, viewResults === 'true');
+        const test = loadTest(testId);
+        
+        if (test) {
+            currentTest = test;
+            
+            if (viewResults === 'true' && currentTest.results) {
+                // Show the results
+                displayResults(currentTest.results);
+                showScreen('results');
+            } else if (currentTest.creatorAnswers.length > 0) {
+                // Show the quiz screen for the recipient
+                updateQuizScreen();
+                showScreen('quiz');
+            } else {
+                // Something went wrong, show the home screen
+                showScreen('home');
+            }
+        } else {
+            // Test not found, show the home screen
+            showScreen('home');
+        }
+    } else {
+        // If no test ID, show home screen
+        showScreen('home');
     }
 }
 
@@ -188,7 +233,9 @@ function setupEventListeners() {
     
     // View results button
     buttons.viewResults.addEventListener('click', () => {
-        window.location.href = `${window.location.origin}${window.location.pathname}?test=${currentTest.id}&results=true`;
+        const baseUrl = `${window.location.origin}${window.location.pathname}`;
+        const resultsUrl = getCompatibleUrl(baseUrl, { test: currentTest.id, results: 'true' });
+        window.location.href = resultsUrl;
     });
     
     // Submit answers button
@@ -196,7 +243,19 @@ function setupEventListeners() {
     
     // Create new test button
     buttons.createNewTest.addEventListener('click', () => {
+        // Clear hash and query parameters when creating a new test
         window.location.href = window.location.origin + window.location.pathname;
+        // Reset current test
+        currentTest = {
+            id: null,
+            mode: null,
+            questions: [],
+            creatorAnswers: [],
+            takerAnswers: [],
+            results: null,
+            creatorName: '',
+            recipientName: ''
+        };
     });
     
     // Share results button
@@ -448,8 +507,9 @@ function generateRandomTest() {
     
     saveTest(currentTest);
     
-    // Generate and show the share link
-    const shareUrl = `${window.location.origin}${window.location.pathname}?test=${testId}`;
+    // Generate and show the share link using the most compatible URL format
+    const baseUrl = `${window.location.origin}${window.location.pathname}`;
+    const shareUrl = getCompatibleUrl(baseUrl, { test: testId });
     shareLink.value = shareUrl;
     
     // Update share buttons
@@ -520,8 +580,9 @@ function generateCustomTest() {
     
     saveTest(currentTest);
     
-    // Generate and show the share link
-    const shareUrl = `${window.location.origin}${window.location.pathname}?test=${testId}`;
+    // Generate and show the share link using the most compatible URL format
+    const baseUrl = `${window.location.origin}${window.location.pathname}`;
+    const shareUrl = getCompatibleUrl(baseUrl, { test: testId });
     shareLink.value = shareUrl;
     
     // Update share buttons
@@ -542,33 +603,19 @@ function saveTest(test) {
 }
 
 // Load a test from localStorage
-function loadTest(testId, viewResults = false) {
+function loadTest(testId) {
     const testData = localStorage.getItem(`love-test-${testId}`);
     
     if (testData) {
-        currentTest = JSON.parse(testData);
-        
-        if (viewResults && currentTest.results) {
-            // Show results
-            displayResults();
-            showScreen('results');
-        } else if (currentTest.takerAnswers.length > 0) {
-            // If the test has been taken, show results to the creator
-            displayResults();
-            showScreen('results');
-        } else {
-            // Show the quiz to the taker
-            loadQuizQuestions();
-            showScreen('quiz');
-        }
+        return JSON.parse(testData);
     } else {
         alert(currentLanguage === 'ar' ? 'الاختبار غير موجود' : 'Test not found');
-        window.location.href = window.location.origin + window.location.pathname;
+        return null;
     }
 }
 
-// Load quiz questions for the taker
-function loadQuizQuestions() {
+// Update the quiz screen for the taker
+function updateQuizScreen() {
     quizQuestionsContainer.innerHTML = '';
     
     // Update the quiz introduction text with the recipient's name
@@ -582,6 +629,11 @@ function loadQuizQuestions() {
         const questionItem = createQuestionItem(question, index + 1, false);
         quizQuestionsContainer.appendChild(questionItem);
     });
+}
+
+// Load quiz questions for the taker (legacy function, kept for backward compatibility)
+function loadQuizQuestions() {
+    updateQuizScreen();
 }
 
 // Submit answers from the taker
@@ -665,8 +717,14 @@ function calculateResults(creatorAnswers, takerAnswers) {
 }
 
 // Display results
-function displayResults() {
-    const results = currentTest.results;
+function displayResults(resultsParam) {
+    // Use provided results or get from currentTest
+    const results = resultsParam || currentTest.results;
+    
+    if (!results) {
+        console.error('No results to display');
+        return;
+    }
     
     // Update the UI with the results
     compatibilityPercentage.textContent = `${results.compatibilityPercentage}%`;
@@ -716,6 +774,46 @@ function copyLinkToClipboard() {
     }, 2000);
 }
 
+// Detect if the app is running in a mobile webview
+function isMobileWebview() {
+    const userAgent = navigator.userAgent.toLowerCase();
+    return (
+        userAgent.includes('instagram') ||
+        userAgent.includes('fbav') || // Facebook
+        userAgent.includes('twitter') ||
+        userAgent.includes('tiktok') ||
+        userAgent.includes('snapchat') ||
+        userAgent.includes('whatsapp') ||
+        (userAgent.includes('android') && userAgent.includes('wv')) // Android WebView
+    );
+}
+
+// Get the most compatible URL format based on the environment
+function getCompatibleUrl(baseUrl, params) {
+    // Create a URL object
+    const url = new URL(baseUrl);
+    
+    // Determine if we're in a mobile webview
+    const isWebview = isMobileWebview();
+    
+    if (isWebview) {
+        // For mobile webviews, use query parameters as they tend to work better
+        // in some webviews that strip hash fragments
+        Object.keys(params).forEach(key => {
+            url.searchParams.set(key, params[key]);
+        });
+    } else {
+        // For regular browsers, use hash-based routing for SPA compatibility
+        const hashParams = new URLSearchParams();
+        Object.keys(params).forEach(key => {
+            hashParams.set(key, params[key]);
+        });
+        url.hash = hashParams.toString();
+    }
+    
+    return url.toString();
+}
+
 // Update share buttons with the current URL
 function updateShareButtons(url) {
     const encodedUrl = encodeURIComponent(url);
@@ -727,7 +825,9 @@ function updateShareButtons(url) {
 
 // Share results
 function shareResults() {
-    const resultsUrl = `${window.location.origin}${window.location.pathname}?test=${currentTest.id}&results=true`;
+    // Generate the most compatible URL format for sharing results
+    const baseUrl = `${window.location.origin}${window.location.pathname}`;
+    const resultsUrl = getCompatibleUrl(baseUrl, { test: currentTest.id, results: 'true' });
     
     // Update share link input
     shareLink.value = resultsUrl;
